@@ -1,0 +1,8 @@
+.env
+
+myenv
+
+__pycache__
+
+expense_model.pkl
+expense_tf-idf.pkl
