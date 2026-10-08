@@ -1,6 +1,8 @@
 // Backend API base URL
-// Tip: To point to your Render backend in production, update this URL or set localStorage.setItem("API_URL", "https://your-backend.onrender.com")
-const API_URL = localStorage.getItem("API_URL") || window.API_URL || "http://127.0.0.1:8000";
+const DEFAULT_REMOTE_API = "https://smart-expenses-tracker-h4v7.onrender.com";
+const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:";
+const API_URL = localStorage.getItem("API_URL") || window.API_URL || (isLocal ? "http://127.0.0.1:8000" : DEFAULT_REMOTE_API);
+
 
 
 // Chart instances
