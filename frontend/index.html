@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Expense - AI Expense & Bill Tracker</title>
+    
+    <!-- Modern Web Fonts & Material Symbols -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ============================================== -->
+    <!-- TOP APP BAR -->
+    <!-- ============================================== -->
+    <header class="top-app-bar">
+        <div class="app-bar-left">
+            <div class="brand-logo" onclick="showTab('dashboard-tab')">
+                <div class="brand-icon-box">
+                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                </div>
+                <span class="brand-title">Smart<span class="brand-accent">Expense</span></span>
+            </div>
+        </div>
+
+        <!-- Segmented Navigation Pills -->
+        <nav class="nav-pill-container">
+            <button class="app-nav-tab active" onclick="showTab('dashboard-tab')">
+                <span class="material-symbols-outlined">insights</span>
+                <span class="nav-text">Dashboard</span>
+            </button>
+            <button class="app-nav-tab" onclick="showTab('add-tab')">
+                <span class="material-symbols-outlined">add_circle</span>
+                <span class="nav-text">Add Expense</span>
+            </button>
+            <button class="app-nav-tab" onclick="showTab('bill-tab')">
+                <span class="material-symbols-outlined">receipt_long</span>
+                <span class="nav-text">AI Bill Scanner</span>
+            </button>
+            <button class="app-nav-tab" onclick="showTab('list-tab')">
+                <span class="material-symbols-outlined">table_chart</span>
+                <span class="nav-text">All Expenses</span>
+            </button>
+            <button class="app-nav-tab" onclick="showTab('ai-tab')">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span class="nav-text">AI Assistant</span>
+            </button>
+        </nav>
+
+        <!-- Right Status Indicator -->
+        <div class="app-bar-right">
+            <div class="status-pill" id="backend-status">
+                <span class="pulse-dot"></span>
+                <span>Connected</span>
+            </div>
+        </div>
+    </header>
+
+
+    <main class="main-viewport">
+
+        <!-- ============================================== -->
+        <!-- TAB 1: DASHBOARD -->
+        <!-- ============================================== -->
+        <section id="dashboard-tab" class="tab-content active">
+
+            <!-- Welcome Overview Banner -->
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h2>Financial Overview & Analytics</h2>
+                    <p class="text-subtle">Smart Machine Learning insights and recurring commitment tracker.</p>
+                </div>
+                <div class="welcome-actions">
+                    <button class="app-btn app-btn-primary" onclick="showTab('add-tab')">
+                        <span class="material-symbols-outlined">add</span> New Expense
+                    </button>
+                    <button class="app-btn app-btn-tonal" onclick="showTab('bill-tab')">
+                        <span class="material-symbols-outlined">receipt_long</span> Scan Bill
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Card -->
+            <div class="app-card filter-container-card">
+                <div class="filter-controls-row">
+                    <div class="filter-input-group">
+                        <span class="material-symbols-outlined filter-icon">calendar_month</span>
+                        <input type="text" id="dash-month" placeholder="Month (YYYY-MM)" value="2026-10">
+                    </div>
+
+                    <div class="filter-input-group">
+                        <span class="material-symbols-outlined filter-icon">category</span>
+                        <select id="dash-category" onchange="loadDashboard()">
+                            <option value="">All Categories</option>
+                            <option value="Food">Food</option>
+                            <option value="Bills">Bills</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Transportation">Transportation</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Education">Education</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-input-group">
+                        <span class="material-symbols-outlined filter-icon">account_balance_wallet</span>
+                        <select id="dash-payment" onchange="loadDashboard()">
+                            <option value="">All Payments</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Card">Card</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Net Banking">Net Banking</option>
+                        </select>
+                    </div>
+
+                    <button class="app-btn app-btn-primary" onclick="loadDashboard()">Apply Filter</button>
+                    <button class="app-btn app-btn-tonal" onclick="clearDashboardFilters()">Reset</button>
+                </div>
+
+                <!-- Quick Filter Presets -->
+                <div class="preset-chips-row">
+                    <span class="preset-label">Quick Presets:</span>
+                    <button class="app-chip" onclick="setDashboardPreset('all', '', '')">All Time</button>
+                    <button class="app-chip active" onclick="setDashboardPreset('2026-10', '', '')">October 2026</button>
+                    <button class="app-chip" onclick="setDashboardPreset('2026-09', '', '')">September 2026</button>
+                    <button class="app-chip" onclick="setDashboardPreset('2026-10', 'Food', '')">Food (Oct)</button>
+                    <button class="app-chip" onclick="setDashboardPreset('2026-10', 'Bills', '')">Bills (Oct)</button>
+                    <button class="app-chip" onclick="setDashboardPreset('', '', 'UPI')">UPI Payments</button>
+                </div>
+            </div>
+
+            <!-- Stats Metric Cards -->
+            <div class="stats-grid">
+                <div class="app-card metric-card card-blue-accent">
+                    <div class="metric-icon-box bg-blue-tint">
+                        <span class="material-symbols-outlined color-blue">payments</span>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-title">Total Spending</span>
+                        <h3 class="metric-amount" id="stat-total-spending">₹0.00</h3>
+                        <span class="metric-tag tag-blue">Current Period</span>
+                    </div>
+                </div>
+
+                <div class="app-card metric-card card-green-accent">
+                    <div class="metric-icon-box bg-green-tint">
+                        <span class="material-symbols-outlined color-green">receipt</span>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-title">Transactions</span>
+                        <h3 class="metric-amount" id="stat-total-count">0</h3>
+                        <span class="metric-tag tag-green">Recorded</span>
+                    </div>
+                </div>
+
+                <div class="app-card metric-card card-yellow-accent">
+                    <div class="metric-icon-box bg-yellow-tint">
+                        <span class="material-symbols-outlined color-yellow">savings</span>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-title">Monthly Budget</span>
+                        <h3 class="metric-amount" id="stat-budget-amount">₹0.00</h3>
+                        <span class="metric-tag tag-yellow">Allocated</span>
+                    </div>
+                </div>
+
+                <div class="app-card metric-card card-red-accent">
+                    <div class="metric-icon-box bg-red-tint">
+                        <span class="material-symbols-outlined color-red">account_balance_wallet</span>
+                    </div>
+                    <div class="metric-data">
+                        <span class="metric-title">Remaining Balance</span>
+                        <h3 class="metric-amount" id="stat-budget-remaining">₹0.00</h3>
+                        <span class="metric-tag tag-red">Available</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Progress Tracker -->
+            <div class="app-card budget-tracker-card">
+                <div class="budget-card-header">
+                    <div>
+                        <h3 class="card-heading">Budget Allowance & Tracking</h3>
+                        <p id="budget-status-text" class="text-subtle">Loading budget status...</p>
+                    </div>
+                    <form id="budget-form" onsubmit="saveBudget(event)" class="inline-form">
+                        <input type="number" id="budget-input" placeholder="Budget (₹)" min="0" step="100" required>
+                        <input type="text" id="budget-month-input" placeholder="YYYY-MM" value="2026-10" required>
+                        <button type="submit" class="app-btn app-btn-primary">Update Budget</button>
+                    </form>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-bar-fill" id="budget-progress-bar" style="width: 0%;"></div>
+                </div>
+                <div class="budget-card-footer">
+                    <span id="budget-spent-label">Spent: ₹0.00</span>
+                    <span id="budget-percent-label" class="budget-percent-tag">0% used</span>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-layout-grid">
+                <div class="app-card">
+                    <div class="card-title-row">
+                        <span class="material-symbols-outlined color-blue">donut_small</span>
+                        <h3 class="card-heading">Category Spending Distribution</h3>
+                    </div>
+                    <div class="chart-canvas-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="app-card">
+                    <div class="card-title-row">
+                        <span class="material-symbols-outlined color-green">show_chart</span>
+                        <h3 class="card-heading">Daily Spending Trend</h3>
+                    </div>
+                    <div class="chart-canvas-container">
+                        <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights & ML Forecast Layout -->
+            <div class="two-column-layout">
+                <!-- AI Insights Card -->
+                <div class="app-card">
+                    <div class="card-title-row">
+                        <span class="material-symbols-outlined color-blue">lightbulb</span>
+                        <h3 class="card-heading">Smart Spending Insights</h3>
+                    </div>
+                    <ul id="insights-list" class="insights-list">
+                        <li>Loading insights...</li>
+                    </ul>
+                </div>
+
+                <!-- 30-Day ML Forecast Card -->
+                <div class="app-card">
+                    <div class="card-title-row">
+                        <span class="material-symbols-outlined color-green">trending_up</span>
+                        <h3 class="card-heading">30-Day ML Expense Forecast</h3>
+                    </div>
+                    <div class="forecast-content-box">
+                        <div class="forecast-metric-row">
+                            <span class="forecast-label">Daily Pace (Linear Regression):</span>
+                            <strong id="forecast-daily" class="forecast-val">₹0.00 / day</strong>
+                        </div>
+                        <div class="forecast-metric-row">
+                            <span class="forecast-label">Next 7 Days Projected Spend:</span>
+                            <strong id="forecast-7day" class="forecast-val color-blue">₹0.00</strong>
+                        </div>
+                        <div class="forecast-metric-row">
+                            <span class="forecast-label">Forecasted 30-Day Month Total:</span>
+                            <strong id="forecast-30day" class="forecast-val color-green">₹0.00</strong>
+                        </div>
+                        <div class="forecast-advice-badge" id="forecast-message">
+                            Analyzing trends with ML...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detected Recurring Expenses Card -->
+            <div class="app-card recurring-section-card">
+                <div class="card-title-row">
+                    <span class="material-symbols-outlined color-blue">autorenew</span>
+                    <h3 class="card-heading">Detected Recurring Bills & Subscriptions</h3>
+                </div>
+                <p class="text-subtle">Automatically detected based on merchant frequency and recurring pattern recognition.</p>
+                <div id="recurring-expenses-container" class="recurring-pills-grid">
+                    <p class="text-subtle">Detecting recurring patterns...</p>
+                </div>
+            </div>
+
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- TAB 2: ADD EXPENSE -->
+        <!-- ============================================== -->
+        <section id="add-tab" class="tab-content">
+            <div class="app-card form-card">
+                <div class="form-header-badge">
+                    <span class="material-symbols-outlined color-blue">add_task</span>
+                    <h2>Add New Expense</h2>
+                </div>
+                <p class="text-subtle">Our Machine Learning classification model will automatically categorize your expense.</p>
+
+                <form id="add-expense-form" onsubmit="handleAddExpense(event)">
+                    <div class="app-text-field">
+                        <label for="exp-description">Expense Description *</label>
+                        <input type="text" id="exp-description" placeholder="e.g. Starbucks cappuccino and cookie, Bus ticket, Electricity bill" required>
+                    </div>
+
+                    <div class="form-triplet-row">
+                        <div class="app-text-field">
+                            <label for="exp-amount">Amount (₹) *</label>
+                            <input type="number" id="exp-amount" min="0.01" step="0.01" placeholder="e.g. 250" required>
+                        </div>
+
+                        <div class="app-text-field">
+                            <label for="exp-date">Date *</label>
+                            <input type="date" id="exp-date" required>
+                        </div>
+
+                        <div class="app-text-field">
+                            <label for="exp-payment">Payment Method *</label>
+                            <select id="exp-payment">
+                                <option value="UPI">UPI</option>
+                                <option value="Card">Card</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Net Banking">Net Banking</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="app-btn app-btn-primary app-btn-block">
+                        <span class="material-symbols-outlined">save</span> Save Expense
+                    </button>
+                </form>
+
+                <div id="add-result-box" class="result-alert-box hidden"></div>
+            </div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- TAB 3: AI BILL SCANNER (OCR & RAG) -->
+        <!-- ============================================== -->
+        <section id="bill-tab" class="tab-content">
+            <div class="app-card form-card">
+                <div class="form-header-badge">
+                    <span class="material-symbols-outlined color-blue">receipt_long</span>
+                    <h2>AI Bill Scanner (Smart OCR)</h2>
+                </div>
+                <p class="text-subtle">Upload any receipt or bill image. RapidOCR will extract the merchant, line items, and total amount with RAG AI question-answering.</p>
+
+                <form id="bill-photo-form" onsubmit="handleBillUpload(event)">
+                    <div class="upload-dropzone">
+                        <span class="material-symbols-outlined dropzone-icon">cloud_upload</span>
+                        <p class="dropzone-text">Click to choose a bill or receipt photo (JPG, PNG)</p>
+                        <input type="file" id="bill-file" accept="image/*" required onchange="previewBillImage(event)">
+                    </div>
+
+                    <div id="image-preview-container" class="image-preview-wrapper hidden">
+                        <img id="bill-preview-img" alt="Bill Preview" class="bill-preview-image">
+                    </div>
+
+                    <div class="app-text-field" style="margin-top: 1rem;">
+                        <label for="bill-question">Ask Question to Bill AI (Optional):</label>
+                        <input type="text" id="bill-question" placeholder="e.g. What items did I buy? What was the tax rate?">
+                    </div>
+
+                    <button type="submit" id="bill-submit-btn" class="app-btn app-btn-primary app-btn-block">
+                        <span class="material-symbols-outlined">receipt_long</span> Scan & Process Bill
+                    </button>
+                </form>
+
+                <div id="bill-loader" class="app-loader hidden">
+                    <div class="app-spinner"></div>
+                    <p>Scanning bill with RapidOCR & AI... Please wait</p>
+                </div>
+
+                <div id="bill-result-box" class="result-alert-box hidden"></div>
+            </div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- TAB 4: ALL EXPENSES TABLE -->
+        <!-- ============================================== -->
+        <section id="list-tab" class="tab-content">
+            <div class="app-card">
+                <div class="table-top-bar">
+                    <div class="card-title-row">
+                        <span class="material-symbols-outlined color-blue">receipt_long</span>
+                        <h3 class="card-heading">Expense Records & Transactions</h3>
+                    </div>
+                    <button class="app-btn app-btn-tonal" onclick="loadExpenses()">
+                        <span class="material-symbols-outlined">refresh</span> Refresh
+                    </button>
+                </div>
+
+                <!-- Search & Filter Toolbar -->
+                <div class="table-filter-toolbar">
+                    <div class="toolbar-search-box">
+                        <span class="material-symbols-outlined">search</span>
+                        <input type="text" id="search-keyword" placeholder="Search by merchant, description, or category..." oninput="filterExpenses()">
+                    </div>
+
+                    <select id="filter-category" onchange="filterExpenses()" class="toolbar-select">
+                        <option value="">All Categories</option>
+                    </select>
+
+                    <select id="filter-payment" onchange="filterExpenses()" class="toolbar-select">
+                        <option value="">All Payments</option>
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Card">Card</option>
+                        <option value="Net Banking">Net Banking</option>
+                    </select>
+                </div>
+
+                <!-- Secondary Filter Bar: Amount, Date, Sort -->
+                <div class="table-secondary-toolbar">
+                    <div class="toolbar-pill-input">
+                        <label>Min ₹:</label>
+                        <input type="number" id="filter-min-amount" placeholder="0" min="0" oninput="filterExpenses()">
+                    </div>
+
+                    <div class="toolbar-pill-input">
+                        <label>Max ₹:</label>
+                        <input type="number" id="filter-max-amount" placeholder="Max" min="0" oninput="filterExpenses()">
+                    </div>
+
+                    <div class="toolbar-pill-input">
+                        <label>From:</label>
+                        <input type="date" id="filter-from-date" onchange="filterExpenses()">
+                    </div>
+
+                    <div class="toolbar-pill-input">
+                        <label>To:</label>
+                        <input type="date" id="filter-to-date" onchange="filterExpenses()">
+                    </div>
+
+                    <select id="filter-sort" onchange="filterExpenses()" class="toolbar-select">
+                        <option value="date-desc">Date: Newest</option>
+                        <option value="date-asc">Date: Oldest</option>
+                        <option value="amount-desc">Amount: High to Low</option>
+                        <option value="amount-asc">Amount: Low to High</option>
+                    </select>
+
+                    <button class="app-btn app-btn-tonal" onclick="resetExpensesFilters()">
+                        <span class="material-symbols-outlined">filter_alt_off</span> Reset
+                    </button>
+                </div>
+
+                <!-- Clean Table -->
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category (ML)</th>
+                                <th>Confidence</th>
+                                <th>Payment</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body">
+                            <tr>
+                                <td colspan="8" class="text-center text-subtle">Loading expenses...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ============================================== -->
+        <!-- TAB 5: AI ASSISTANT -->
+        <!-- ============================================== -->
+        <section id="ai-tab" class="tab-content">
+            <div class="app-card assistant-container">
+                <div class="assistant-header-box">
+                    <div class="sparkle-avatar">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                    </div>
+                    <div>
+                        <h2>AI Expense Assistant</h2>
+                        <p class="text-subtle">Ask natural language questions about your total expenses, category spending, or highest bills.</p>
+                    </div>
+                </div>
+
+                <!-- Suggestion Chips -->
+                <div class="chips-shelf">
+                    <span class="shelf-label">Suggestions:</span>
+                    <button class="app-chip" onclick="askPredefined('How much did I spend on Food?')">How much on Food?</button>
+                    <button class="app-chip" onclick="askPredefined('What is my highest expense?')">Highest expense?</button>
+                    <button class="app-chip" onclick="askPredefined('List all expenses paid with UPI')">UPI expenses</button>
+                    <button class="app-chip" onclick="askPredefined('Give a summary of my spending')">Summary report</button>
+                </div>
+
+                <!-- AI Prompt Input -->
+                <form id="ai-assistant-form" onsubmit="handleAiAssistant(event)">
+                    <div class="prompt-bar">
+                        <input type="text" id="ai-question" placeholder="Ask a question about your expenses (e.g. How much did I spend on rent and electricity?)" required>
+                        <button type="submit" id="ai-ask-btn" class="send-btn" title="Send Prompt">
+                            <span class="material-symbols-outlined">send</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="ai-loader" class="app-loader hidden">
+                    <div class="app-spinner"></div>
+                    <p>AI is analyzing your financial records...</p>
+                </div>
+
+                <div id="ai-answer-box" class="assistant-bubble-response hidden">
+                    <div class="response-icon">
+                        <span class="material-symbols-outlined">auto_awesome</span>
+                    </div>
+                    <div class="response-text">
+                        <h4>AI Assistant Answer</h4>
+                        <p id="ai-answer-text"></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="app-snackbar hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

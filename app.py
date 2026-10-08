@@ -7,6 +7,8 @@ import os
 from ai_features import extract_bill_details
 from rag_feature import get_answer
 from ai_assistant import ask_expense_ai
+from forecast_ml import ml_forecast_expenses
+from recurring_detector import detect_recurring_expenses
 
 
 with open("expense_model.pkl", "rb") as f:
@@ -19,15 +21,81 @@ app = FastAPI(title="Smart Expense Management")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 expenses = [
+    # --- Recurring September Baseline ---
     {
         "id": 1,
+        "description": "Apartment House Rent",
+        "amount": 12000.0,
+        "date": "2026-09-05",
+        "payment_method": "Net Banking",
+        "category": "Bills",
+        "confidence": 0.99
+    },
+    {
+        "id": 2,
+        "description": "Netflix Monthly Subscription",
+        "amount": 649.0,
+        "date": "2026-09-01",
+        "payment_method": "Card",
+        "category": "Entertainment",
+        "confidence": 0.98
+    },
+    {
+        "id": 3,
+        "description": "Spotify Premium Individual Plan",
+        "amount": 119.0,
+        "date": "2026-09-05",
+        "payment_method": "UPI",
+        "category": "Entertainment",
+        "confidence": 0.97
+    },
+    {
+        "id": 4,
+        "description": "Electricity power bill payment",
+        "amount": 1500.0,
+        "date": "2026-09-10",
+        "payment_method": "UPI",
+        "category": "Bills",
+        "confidence": 0.97
+    },
+    {
+        "id": 5,
+        "description": "High-speed broadband wifi bill",
+        "amount": 799.0,
+        "date": "2026-09-15",
+        "payment_method": "UPI",
+        "category": "Bills",
+        "confidence": 0.96
+    },
+    {
+        "id": 6,
+        "description": "Gym Fitness Membership",
+        "amount": 1200.0,
+        "date": "2026-09-16",
+        "payment_method": "UPI",
+        "category": "Healthcare",
+        "confidence": 0.95
+    },
+
+    # --- October Current Active Expenses ---
+    {
+        "id": 7,
+        "description": "Netflix Monthly Subscription",
+        "amount": 649.0,
+        "date": "2026-10-01",
+        "payment_method": "Card",
+        "category": "Entertainment",
+        "confidence": 0.98
+    },
+    {
+        "id": 8,
         "description": "Lunch at restaurant",
         "amount": 250.0,
         "date": "2026-10-01",
@@ -36,8 +104,8 @@ expenses = [
         "confidence": 0.95
     },
     {
-        "id": 2,
-        "description": "Bus ticket",
+        "id": 9,
+        "description": "Bus ticket to office",
         "amount": 80.0,
         "date": "2026-10-02",
         "payment_method": "Cash",
@@ -45,26 +113,44 @@ expenses = [
         "confidence": 0.92
     },
     {
-        "id": 3,
-        "description": "Movie ticket",
-        "amount": 350.0,
+        "id": 10,
+        "description": "Movie tickets & snacks",
+        "amount": 480.0,
         "date": "2026-10-03",
         "payment_method": "Card",
         "category": "Entertainment",
         "confidence": 0.94
     },
     {
-        "id": 4,
-        "description": "Grocery shopping",
-        "amount": 1200.0,
+        "id": 11,
+        "description": "Apartment House Rent",
+        "amount": 12000.0,
         "date": "2026-10-05",
+        "payment_method": "Net Banking",
+        "category": "Bills",
+        "confidence": 0.99
+    },
+    {
+        "id": 12,
+        "description": "Spotify Premium Individual Plan",
+        "amount": 119.0,
+        "date": "2026-10-05",
+        "payment_method": "UPI",
+        "category": "Entertainment",
+        "confidence": 0.97
+    },
+    {
+        "id": 13,
+        "description": "Weekly grocery shopping",
+        "amount": 1850.0,
+        "date": "2026-10-06",
         "payment_method": "UPI",
         "category": "Shopping",
         "confidence": 0.96
     },
     {
-        "id": 5,
-        "description": "College books",
+        "id": 14,
+        "description": "College books & stationary supplies",
         "amount": 750.0,
         "date": "2026-10-07",
         "payment_method": "Cash",
@@ -72,17 +158,26 @@ expenses = [
         "confidence": 0.91
     },
     {
-        "id": 6,
-        "description": "Electricity bill",
-        "amount": 1800.0,
+        "id": 15,
+        "description": "Petrol fuel refill for car",
+        "amount": 1100.0,
+        "date": "2026-10-09",
+        "payment_method": "Card",
+        "category": "Transportation",
+        "confidence": 0.94
+    },
+    {
+        "id": 16,
+        "description": "Electricity power bill payment",
+        "amount": 1500.0,
         "date": "2026-10-10",
         "payment_method": "UPI",
         "category": "Bills",
         "confidence": 0.97
     },
     {
-        "id": 7,
-        "description": "Medicine",
+        "id": 17,
+        "description": "Pharmacy medicine prescription",
         "amount": 450.0,
         "date": "2026-10-12",
         "payment_method": "Card",
@@ -90,19 +185,91 @@ expenses = [
         "confidence": 0.93
     },
     {
-        "id": 8,
-        "description": "Dinner",
-        "amount": 500.0,
-        "date": "2026-10-15",
+        "id": 18,
+        "description": "Swiggy dinner order with friends",
+        "amount": 560.0,
+        "date": "2026-10-14",
         "payment_method": "UPI",
         "category": "Food",
         "confidence": 0.95
+    },
+    {
+        "id": 19,
+        "description": "High-speed broadband wifi bill",
+        "amount": 799.0,
+        "date": "2026-10-15",
+        "payment_method": "UPI",
+        "category": "Bills",
+        "confidence": 0.96
+    },
+    {
+        "id": 20,
+        "description": "Gym Fitness Membership",
+        "amount": 1200.0,
+        "date": "2026-10-16",
+        "payment_method": "UPI",
+        "category": "Healthcare",
+        "confidence": 0.95
+    },
+    {
+        "id": 21,
+        "description": "Metro rail monthly smart card",
+        "amount": 400.0,
+        "date": "2026-10-17",
+        "payment_method": "UPI",
+        "category": "Transportation",
+        "confidence": 0.93
+    },
+    {
+        "id": 22,
+        "description": "Amazon online shopping purchase",
+        "amount": 1450.0,
+        "date": "2026-10-18",
+        "payment_method": "Card",
+        "category": "Shopping",
+        "confidence": 0.95
+    },
+    {
+        "id": 23,
+        "description": "Starbucks coffee & pastries",
+        "amount": 340.0,
+        "date": "2026-10-20",
+        "payment_method": "UPI",
+        "category": "Food",
+        "confidence": 0.92
+    },
+    {
+        "id": 24,
+        "description": "Mobile phone prepaid recharge",
+        "amount": 299.0,
+        "date": "2026-10-21",
+        "payment_method": "UPI",
+        "category": "Bills",
+        "confidence": 0.98
+    },
+    {
+        "id": 25,
+        "description": "HARISHANKER VEG RESTO bill",
+        "amount": 1864.4,
+        "date": "2026-10-22",
+        "payment_method": "UPI",
+        "category": "Food",
+        "confidence": 0.96,
+        "bill_photo": True,
+        "bill_items": [
+            {"name": "Handi Paneer"},
+            {"name": "Sev Tamatar"},
+            {"name": "Plain Raita"},
+            {"name": "Jeera Rice"},
+            {"name": "Tava Roti Butter"},
+            {"name": "Vanilla Ice Cream"}
+        ]
     }
 ]
 
 budget = {
-    "amount": 0.0,
-    "month": ""
+    "amount": 32000.0,
+    "month": "2026-10"
 }
 
 
@@ -159,26 +326,42 @@ def get_expenses(
     category: str = "",
     payment_method: str = "",
     month: str = "",
-    keyword: str = ""
+    keyword: str = "",
+    min_amount: float = 0.0,
+    max_amount: float = 0.0,
+    start_date: str = "",
+    end_date: str = ""
 ):
     result = expenses
 
     if category:
-        result = [e for e in result if e["category"].lower() == category.lower()]
+        result = [e for e in result if e.get("category", "").lower() == category.lower()]
 
     if payment_method:
         result = [
             e for e in result
-            if e["payment_method"].lower() == payment_method.lower()
+            if e.get("payment_method", "").lower() == payment_method.lower()
         ]
 
     if month:
-        result = [e for e in result if e["date"].startswith(month)]
+        result = [e for e in result if str(e.get("date", "")).startswith(month)]
+
+    if start_date:
+        result = [e for e in result if str(e.get("date", "")) >= start_date]
+
+    if end_date:
+        result = [e for e in result if str(e.get("date", "")) <= end_date]
+
+    if min_amount > 0:
+        result = [e for e in result if float(e.get("amount", 0)) >= min_amount]
+
+    if max_amount > 0:
+        result = [e for e in result if float(e.get("amount", 0)) <= max_amount]
 
     if keyword:
         result = [
             e for e in result
-            if keyword.lower() in e["description"].lower()
+            if keyword.lower() in str(e.get("description", "")).lower()
         ]
 
     return {"count": len(result), "expenses": result}
@@ -206,13 +389,26 @@ def set_budget(data: Budget):
 
 
 @app.get("/dashboard")
-def dashboard(month: str = ""):
+def dashboard(
+    month: str = "",
+    category: str = "",
+    payment_method: str = ""
+):
     selected = expenses
 
     if month:
-        selected = [e for e in expenses if e["date"].startswith(month)]
+        selected = [e for e in selected if str(e.get("date", "")).startswith(month)]
 
-    total_amount = sum(e["amount"] for e in selected)
+    if category:
+        selected = [e for e in selected if str(e.get("category", "")).lower() == category.lower()]
+
+    if payment_method:
+        selected = [
+            e for e in selected
+            if str(e.get("payment_method", "")).lower() == payment_method.lower()
+        ]
+
+    total_amount = sum(float(e["amount"]) for e in selected)
 
     category_totals = {}
 
@@ -270,24 +466,8 @@ def dashboard(month: str = ""):
             budget_info["status"] = "Within budget"
             insights.append(f"You have used {percentage:.1f}% of your budget.")
 
-    forecast = {
-        "current_spending": round(total_amount, 2),
-        "average_spending_per_active_day": 0,
-        "forecasted_30_day_spending": 0,
-        "message": "Not enough data for a forecast."
-    }
-
-    if daily_totals:
-        average_daily = total_amount / len(daily_totals)
-        forecasted = average_daily * 30
-
-        forecast["average_spending_per_active_day"] = round(average_daily, 2)
-        forecast["forecasted_30_day_spending"] = round(forecasted, 2)
-
-        if budget["amount"] > 0 and forecasted > budget["amount"]:
-            forecast["message"] = "Current spending rate may exceed the budget."
-        else:
-            forecast["message"] = "Current spending rate is within the budget."
+    # ML Expense Forecasting using Linear Regression
+    forecast = ml_forecast_expenses(selected, budget["amount"])
 
     return {
         "month": month if month else "all",
@@ -305,8 +485,28 @@ def dashboard(month: str = ""):
         "budget": budget_info,
         "insights": insights,
         "forecast": forecast,
+        "recurring_expenses": detect_recurring_expenses(expenses),
         "expenses": selected
     }
+
+
+@app.get("/expenses/recurring")
+def get_recurring():
+    """
+    Returns detected recurring subscription / utility expenses.
+    """
+    return {
+        "count": len(detect_recurring_expenses(expenses)),
+        "recurring_expenses": detect_recurring_expenses(expenses)
+    }
+
+
+@app.get("/forecast")
+def get_forecast(month: str = ""):
+    selected = expenses
+    if month:
+        selected = [e for e in expenses if e["date"].startswith(month)]
+    return ml_forecast_expenses(selected, budget["amount"])
 
 
 # Bill photo AI feature
