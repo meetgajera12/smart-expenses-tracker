@@ -1,5 +1,7 @@
 // Backend API base URL
-const API_URL = "http://127.0.0.1:8000";
+// Tip: To point to your Render backend in production, update this URL or set localStorage.setItem("API_URL", "https://your-backend.onrender.com")
+const API_URL = localStorage.getItem("API_URL") || window.API_URL || "http://127.0.0.1:8000";
+
 
 // Chart instances
 let categoryChartInstance = null;

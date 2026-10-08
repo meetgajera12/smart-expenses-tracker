@@ -1,9 +1,16 @@
+import os
+import sys
+import pickle
+import tempfile
+
+# Ensure backend directory is in sys.path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import pickle
-import tempfile
-import os
 from ai_features import extract_bill_details
 from rag_feature import get_answer
 from ai_assistant import ask_expense_ai
@@ -11,10 +18,13 @@ from forecast_ml import ml_forecast_expenses
 from recurring_detector import detect_recurring_expenses
 
 
-with open("expense_model.pkl", "rb") as f:
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(BASE_DIR, "expense_model.pkl"), "rb") as f:
     model = pickle.load(f)
 
-with open("expense_tf-idf.pkl", "rb") as f:
+with open(os.path.join(BASE_DIR, "expense_tf-idf.pkl"), "rb") as f:
     tfidf = pickle.load(f)
 
 app = FastAPI(title="Smart Expense Management")
@@ -579,3 +589,9 @@ def ans_assistant(que: str):
     answer = ask_expense_ai(expenses,que)
 
     return answer
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)

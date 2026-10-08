@@ -1,8 +1,22 @@
+# Environment variables
 .env
+backend/.env
+*.env
 
-myenv
+# Python virtual environment
+myenv/
+venv/
+.venv/
+env/
 
-__pycache__
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
 
-expense_model.pkl
-expense_tf-idf.pkl
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
