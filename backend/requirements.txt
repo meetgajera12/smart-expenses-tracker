@@ -8,4 +8,5 @@ pillow
 scikit-learn==1.9.0
 langchain-groq
 python-dotenv
-
+pandas
+numpy
